@@ -36,6 +36,8 @@ public:
     RomRange const* findRomRange(uint16_t romAddr) const;
     RomRange* findRomRange(uint16_t romAddr);
     RomRange* addRomRange(uint16_t romStart, uint16_t romEnd);
+    QVector<QPair<uint16_t, uint16_t>> getRomRanges() const;
+    bool deleteRomRange(uint16_t romAddr);
 
     QString findLocalRamLabelByAddr(uint16_t romAddr, uint16_t ramAddr) const;
     void setLocalRamLabel(uint16_t romAddr, uint16_t ramAddr, const QString & label);

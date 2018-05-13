@@ -20,6 +20,8 @@ private slots:
     void on_actionRefresh_triggered();
     void on_actionImport_dissn8_cfg_triggered();
 
+    void on_actionROM_Ranges_triggered();
+
 private:
     Ui::MainWindow *ui;
 };

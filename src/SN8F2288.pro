@@ -34,7 +34,8 @@ SOURCES += \
     Database.cpp \
     DisassemblerTextEdit.cpp \
     DisassemblerHighlighter.cpp \
-    DisassemblerBackend.cpp
+    DisassemblerBackend.cpp \
+    RangesDialog.cpp
 
 HEADERS += \
     MainWindow.h \
@@ -44,7 +45,9 @@ HEADERS += \
     DisassemblerTextEdit.h \
     DisassemblerHighlighter.h \
     DisassemblerBackend.h \
-    Utf8Ini/Utf8Ini.h
+    Utf8Ini/Utf8Ini.h \
+    RangesDialog.h
 
 FORMS += \
-    MainWindow.ui
+    MainWindow.ui \
+    RangesDialog.ui

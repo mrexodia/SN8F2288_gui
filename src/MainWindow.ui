@@ -60,6 +60,7 @@
     <addaction name="action_Load_ROM"/>
     <addaction name="actionRefresh"/>
     <addaction name="actionImport_dissn8_cfg"/>
+    <addaction name="actionROM_Ranges"/>
    </widget>
    <addaction name="menu_File"/>
   </widget>
@@ -85,6 +86,11 @@
   <action name="actionImport_dissn8_cfg">
    <property name="text">
     <string>Import dissn8 cfg</string>
+   </property>
+  </action>
+  <action name="actionROM_Ranges">
+   <property name="text">
+    <string>ROM Ranges...</string>
    </property>
   </action>
  </widget>

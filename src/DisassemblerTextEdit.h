@@ -11,6 +11,7 @@ class DisassemblerTextEdit : public QPlainTextEdit
 public:
     explicit DisassemblerTextEdit(QWidget* parent = nullptr);
     DisassemblerHighlighter* highlighter() const { return mHighlighter; }
+    DisassemblerBackend* backend() { return &mBackend; }
     std::vector<Token>* selectedLine() const;
     uint16_t selectedAddr() const;
     Token* selectedToken() const;

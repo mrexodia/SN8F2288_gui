@@ -127,6 +127,27 @@ Database::RomRange* Database::addRomRange(uint16_t romStart, uint16_t romEnd)
     return &romRanges.back();
 }
 
+QVector<QPair<uint16_t, uint16_t>> Database::getRomRanges() const
+{
+    QVector<QPair<uint16_t, uint16_t>> ranges;
+    for(auto & range : romRanges)
+        ranges.push_back({range.romStart, range.romEnd});
+    return ranges;
+}
+
+bool Database::deleteRomRange(uint16_t romAddr)
+{
+    for(auto it = romRanges.begin(); it != romRanges.end(); ++it)
+    {
+        if(romAddr >= it->romStart && romAddr <= it->romEnd)
+        {
+            romRanges.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
+
 QString Database::findLocalRamLabelByAddr(uint16_t romAddr, uint16_t ramAddr) const
 {
     auto range = findRomRange(romAddr);

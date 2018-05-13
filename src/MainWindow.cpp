@@ -6,6 +6,8 @@
 #include <QStandardPaths>
 #include <QDebug>
 
+#include "RangesDialog.h"
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -41,4 +43,11 @@ void MainWindow::on_actionImport_dissn8_cfg_triggered()
         return;
     file = QDir::toNativeSeparators(file);
     ui->disassembler->loadCfg(file);
+}
+
+void MainWindow::on_actionROM_Ranges_triggered()
+{
+    RangesDialog ranges(&ui->disassembler->backend()->db, this);
+    if(ranges.exec() != QDialog::Accepted)
+        return;
 }
