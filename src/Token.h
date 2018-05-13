@@ -123,6 +123,7 @@ struct Token
         t.type = type;
         t.value = value;
         t.text = text;
+        t.bit = bit;
         return t;
     }
 };

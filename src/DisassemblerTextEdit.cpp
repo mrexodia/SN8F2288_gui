@@ -203,6 +203,7 @@ void DisassemblerTextEdit::keyPressEvent(QKeyEvent* event)
     }
     else if(text == "n") // Label
     {
+        auto addr = selectedAddr();
         auto t = selectedToken();
         if(t)
         {
@@ -215,7 +216,7 @@ void DisassemblerTextEdit::keyPressEvent(QKeyEvent* event)
                 auto addr = t->value;
                 QString label = mBackend.db.findRomLabelByAddr(addr);
                 bool ok = false;
-                auto title = QString().sprintf("Label at 0x%04x", addr);
+                auto title = QString().sprintf("ROM label at 0x%04x", addr);
                 label = QInputDialog::getText(this, title, title, QLineEdit::Normal, label, &ok, Qt::Popup);
                 if(ok)
                 {
@@ -225,8 +226,70 @@ void DisassemblerTextEdit::keyPressEvent(QKeyEvent* event)
                 break;
             }
 
+            case Token::Ram:
+            {
+                auto range = mBackend.db.findRomRange(addr);
+                if(range)
+                {
+                    auto found = range->ramLabels.find(t->value);
+                    QString label = found != range->ramLabels.end() ? found.value() : QString();
+                    bool ok = false;
+                    auto title = QString().sprintf("Local RAM label at 0x%02x", t->value);
+                    label = QInputDialog::getText(this, title, title, QLineEdit::Normal, label, &ok, Qt::Popup);
+                    if(ok)
+                    {
+                        range->ramLabels[t->value] = label;
+                        refreshRom();
+                    }
+                }
+                else
+                {
+                    QString label = mBackend.db.findGlobalRamLabelByAddr(t->value);
+                    bool ok = false;
+                    auto title = QString().sprintf("Global RAM label at 0x%02x", t->value);
+                    label = QInputDialog::getText(this, title, title, QLineEdit::Normal, label, &ok, Qt::Popup);
+                    if(ok)
+                    {
+                        mBackend.db.setGlobalRamLabel(t->value, label);
+                        refreshRom();
+                    }
+                }
+                break;
+            }
+
+            case Token::Bit:
+            {
+                auto range = mBackend.db.findRomRange(addr);
+                if(range)
+                {
+                    auto found = range->ramBitLabels.find({t->value, t->bit});
+                    QString label = found != range->ramBitLabels.end() ? found.value() : QString();
+                    bool ok = false;
+                    auto title = QString().sprintf("Local RAM label at 0x%02x.%d", t->value, t->bit);
+                    label = QInputDialog::getText(this, title, title, QLineEdit::Normal, label, &ok, Qt::Popup);
+                    if(ok)
+                    {
+                        range->ramBitLabels[{t->value, t->bit}] = label;
+                        refreshRom();
+                    }
+                }
+                else
+                {
+                    QString label = mBackend.db.findGlobalRamBitLabelByAddr(t->value, t->bit);
+                    bool ok = false;
+                    auto title = QString().sprintf("Global RAM label at 0x%02x.%d", t->value, t->bit);
+                    label = QInputDialog::getText(this, title, title, QLineEdit::Normal, label, &ok, Qt::Popup);
+                    if(ok)
+                    {
+                        mBackend.db.setGlobalRamBitLabel(t->value, t->bit, label);
+                        refreshRom();
+                    }
+                }
+                break;
+            }
+
             default:
-                qDebug() << "unsupported rename! token start" << t->start << "token text" << t->text << "token addr " << t->value << "token type" << t->type;
+                qDebug() << "unsupported rename! token start" << t->start << "token text" << t->text << "token addr" << t->value << "token type" << t->type << "bit" << t->bit;
             }
         }
     }
