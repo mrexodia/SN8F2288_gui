@@ -59,6 +59,7 @@
     </property>
     <addaction name="action_Load_ROM"/>
     <addaction name="actionRefresh"/>
+    <addaction name="actionImport_dissn8_cfg"/>
    </widget>
    <addaction name="menu_File"/>
   </widget>
@@ -79,6 +80,11 @@
   <action name="actionRefresh">
    <property name="text">
     <string>Refresh</string>
+   </property>
+  </action>
+  <action name="actionImport_dissn8_cfg">
+   <property name="text">
+    <string>Import dissn8 cfg</string>
    </property>
   </action>
  </widget>

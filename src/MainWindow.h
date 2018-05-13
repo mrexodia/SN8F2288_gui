@@ -17,8 +17,8 @@ public:
 
 private slots:
     void on_action_Load_ROM_triggered();
-
     void on_actionRefresh_triggered();
+    void on_actionImport_dissn8_cfg_triggered();
 
 private:
     Ui::MainWindow *ui;

@@ -33,3 +33,12 @@ void MainWindow::on_actionRefresh_triggered()
 {
     ui->disassembler->refreshRom();
 }
+
+void MainWindow::on_actionImport_dissn8_cfg_triggered()
+{
+    auto file = QFileDialog::getOpenFileName(this, "Load CFG", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+    if(file.isEmpty())
+        return;
+    file = QDir::toNativeSeparators(file);
+    ui->disassembler->loadCfg(file);
+}

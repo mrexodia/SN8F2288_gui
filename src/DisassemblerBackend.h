@@ -67,7 +67,7 @@ public:
                 if(operands[0].valid)
                 {
                     line.push_back(Token::space());
-                    auto tokOperand = [&db](const Operand & op) -> Token
+                    auto tokOperand = [&](const Operand & op) -> Token
                     {
                         switch(op.type)
                         {
@@ -76,9 +76,27 @@ public:
                         case Operand::Imm:
                             return Token::op(Token::Imm, op.text, op.value, op.bit);
                         case Operand::Ram:
-                            return Token::op(Token::Ram, op.text, op.value, op.bit);
+                        {
+                            auto label = db.findLocalRamLabelByAddr(addr, op.value);
+                            if(label.isEmpty())
+                                label = db.findGlobalRamLabelByAddr(op.value);
+                            return Token::op(Token::Ram, label.isEmpty() ? op.text : label, op.value, op.bit);
+                        }
                         case Operand::Bit:
-                            return Token::op(Token::Bit, op.text, op.value, op.bit);
+                        {
+                            auto label = db.findLocalRamBitLabelByAddr(addr, op.value, op.bit);
+                            if(label.isEmpty())
+                                label = db.findGlobalRamBitLabelByAddr(op.value, op.bit);
+                            if(label.isEmpty())
+                            {
+                                auto ram = db.findLocalRamLabelByAddr(addr, op.value);
+                                if(ram.isEmpty())
+                                    ram = db.findGlobalRamLabelByAddr(op.value);
+                                if(!ram.isEmpty())
+                                    label = QString("%1.%2").arg(ram).arg(op.bit);
+                            }
+                            return Token::op(Token::Bit, label.isEmpty() ? op.text : label, op.value, op.bit);
+                        }
                         case Operand::Rom:
                         {
                             auto label = db.findRomLabelByAddr(op.value);
@@ -91,7 +109,7 @@ public:
                     {
                         line.push_back(Token::comma());
                         line.push_back(Token::space());
-                        line.push_back(tokOperand(operands[0]));
+                        line.push_back(tokOperand(operands[1]));
                     }
                 }
             }

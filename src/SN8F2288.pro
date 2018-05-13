@@ -43,7 +43,8 @@ HEADERS += \
     Token.h \
     DisassemblerTextEdit.h \
     DisassemblerHighlighter.h \
-    DisassemblerBackend.h
+    DisassemblerBackend.h \
+    Utf8Ini/Utf8Ini.h
 
 FORMS += \
     MainWindow.ui

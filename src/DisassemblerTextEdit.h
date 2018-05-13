@@ -15,6 +15,7 @@ public:
     uint16_t selectedAddr() const;
     Token* selectedToken() const;
 
+    void loadCfg(const QString & file);
     void loadRom(const QString & file);
     void refreshRom();
 

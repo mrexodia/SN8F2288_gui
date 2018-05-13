@@ -1,0 +1,3 @@
+[submodule "src/Utf8Ini"]
+	path = src/Utf8Ini
+	url = https://github.com/mrexodia/Utf8Ini
