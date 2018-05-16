@@ -175,14 +175,22 @@ void DisassemblerBackend::loadRom(const QString & file)
 
         vector<uint16_t> branches;
         disassemble(curLine, branches);
+
         if(curLine.entry.branchType == CALLI)
             callTargets.push_back(curLine.operands[0].value);
 
         for(auto branch : branches)
+        {
+            lineInfo[branch].referencedFrom.push_back(curAddr);
             q.push(branch);
+        }
     }
 
     qDebug() << "possible functions:";
+
+    //https://stackoverflow.com/questions/1041620/whats-the-most-efficient-way-to-erase-duplicates-and-sort-a-vector
+    sort(callTargets.begin(), callTargets.end());
+    callTargets.erase(unique(callTargets.begin(), callTargets.end()), callTargets.end());
     for(uint16_t func : callTargets)
         qDebug() << QString().sprintf("0x%04x", func);
 }

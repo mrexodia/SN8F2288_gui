@@ -38,6 +38,7 @@ public:
         bool valid = false;
         uint16_t addr = 0;
         uint16_t data = 0;
+        vector<uint16_t> referencedFrom;
 
         //QString label;
         InstrEntry entry;
@@ -105,7 +106,15 @@ public:
                         }
                     };
                     line.push_back(tokOperand(operands[0]));
-                    if(operands[1].valid)
+                    if(QString(entry.mnemonic) == QString("JMP") && operands[0].type == Operand::Rom) //CALL/JMP
+                    {
+                        auto arrow = operands[0].value < addr ? QChar(0x25B2) : QString();
+                        auto diff = operands[0].value - addr;
+                        if(qAbs(diff) < 10)
+                            arrow += QString(" $%1%2").arg(diff > 0 ? "+" : "").arg(diff);
+                        line.push_back(Token::other(QString(arrow)));
+                    }
+                    else if(operands[1].valid)
                     {
                         line.push_back(Token::comma());
                         line.push_back(Token::space());

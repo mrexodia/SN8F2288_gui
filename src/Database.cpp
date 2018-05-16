@@ -1,24 +1,175 @@
 #include "Database.h"
 #include <QDebug>
+#include <QFile>
+
+#include "Utf8Ini/Utf8Ini.h"
 
 bool Database::save(const QString & file) const
 {
-    Q_UNUSED(file);
-    qDebug() << "Database::save not implemented!";
-    return false;
+    QFile f(file);
+    if(!f.open(QFile::WriteOnly | QFile::Text))
+    {
+        qDebug() << "Failed to open file...";
+        return false;
+    }
+    Utf8Ini ini;
+    auto saveRamLabels = [&ini](const QString & section, const QMap<uint16_t, QString> & ram)
+    {
+        for(auto key : ram.keys())
+            ini.SetValue(section.toStdString(), QString().sprintf("0x%04x", key).toStdString(), ram[key].toStdString());
+    };
+    auto saveRamBitLabels = [&ini](const QString & section, const QMap<QPair<uint16_t, uint8_t>, QString> & ram)
+    {
+        for(auto key : ram.keys())
+            ini.SetValue(section.toStdString(), QString().sprintf("0x%04x.%d", key.first, key.second).toStdString(), ram[key].toStdString());
+    };
+    saveRamLabels("ram", globalRamLabels);
+    saveRamBitLabels("ram", globalRamBitLabels);
+    for(auto & romRange : romRanges)
+    {
+        auto section = QString().sprintf("ram@0x%04x-0x%04x", romRange.romStart, romRange.romEnd);
+        saveRamLabels(section, romRange.ramLabels);
+        saveRamBitLabels(section, romRange.ramBitLabels);
+    }
+    saveRamLabels("rom", romLabels);
+    saveRamLabels("comment", romComments);
+    f.write(ini.Serialize().c_str());
+    f.close();
+    return true;
 }
 
 bool Database::load(const QString & file)
 {
-    Q_UNUSED(file);
-    qDebug() << "Database::load not implemented!";
-    return false;
+    QFile f(file);
+    if(!f.open(QFile::ReadOnly | QFile::Text))
+    {
+        qDebug() << "Failed to open file...";
+        return false;
+    }
+    auto data = f.readAll().toStdString();
+    f.close();
+    Utf8Ini ini;
+    int errorLine = -1;
+    if(!ini.Deserialize(data, errorLine))
+    {
+        qDebug() << QString("Failed to deserialize INI (line %d)").arg(errorLine);
+        return false;
+    }
+    for(auto & section : ini.Sections())
+    {
+        auto qsection = QString::fromStdString(section);
+        if(section == "chip")
+        {
+            //ignore
+        }
+        else if(section == "ram")
+        {
+            for(auto & key : ini.Keys(section))
+            {
+                bool ok = false;
+                auto ramAddrText = QString::fromStdString(key);
+                auto bitIdx = ramAddrText.indexOf('.');
+                if(bitIdx != -1)
+                {
+                    bool ok1 = false, ok2 = false;
+                    auto ramAddr = ramAddrText.left(bitIdx).toUShort(&ok1, 16);
+                    auto bitAddr = ramAddrText.right(1).toUShort(&ok2);
+                    if(ok1 && ok2)
+                        setGlobalRamBitLabel(ramAddr, bitAddr, QString::fromStdString(ini.GetValue(section, key)));
+                    else
+                        qDebug() << "global bit nein";
+                }
+                else
+                {
+                    auto ramAddr = ramAddrText.toUShort(&ok, 16);
+                    if(ok)
+                        setGlobalRamLabel(ramAddr, QString::fromStdString(ini.GetValue(section, key)));
+                }
+            }
+        }
+        else if(qsection.startsWith("ram@"))
+        {
+            auto midIdx = qsection.indexOf('-');
+            if(midIdx != -1)
+            {
+                auto startText = qsection.mid(4, midIdx - 4);
+                auto endText = qsection.mid(midIdx + 1);
+                bool ok1 = false, ok2 = false;
+                auto start = startText.toUShort(&ok1, 16);
+                auto end = endText.toUShort(&ok2, 16);
+                if(ok1 && ok2)
+                {
+                    auto romRange = addRomRange(start, end);
+                    for(auto & key : ini.Keys(section))
+                    {
+                        bool ok = false;
+                        auto ramAddrText = QString::fromStdString(key);
+                        auto bitIdx = ramAddrText.indexOf('.');
+                        if(bitIdx != -1)
+                        {
+                            bool ok1 = false, ok2 = false;
+                            auto ramAddr = ramAddrText.left(bitIdx).toUShort(&ok1, 16);
+                            auto bitAddr = ramAddrText.right(1).toUShort(&ok2);
+                            if(ok1 && ok2)
+                                romRange->ramBitLabels.insert({ramAddr, bitAddr}, QString::fromStdString(ini.GetValue(section, key)));
+                            else
+                                qDebug() << "local ram bit nein";
+                        }
+                        else
+                        {
+                            auto ramAddr = ramAddrText.toUShort(&ok, 16);
+                            if(ok)
+                                romRange->ramLabels.insert(ramAddr, QString::fromStdString(ini.GetValue(section, key)));
+                        }
+                    }
+                }
+                else
+                {
+                    qDebug() << QString("Incorrectly formatted section '%1'").arg(qsection);
+                    return false;
+                }
+            }
+            else
+            {
+                qDebug() << QString("Incorrectly formatted section '%1'").arg(qsection);
+                return false;
+            }
+        }
+        else if(section == "rom")
+        {
+            for(auto & key : ini.Keys(section))
+            {
+                bool ok = false;
+                auto romAddr = QString(key.c_str()).toUShort(&ok, 16);
+                if(ok)
+                    setRomLabel(romAddr, QString::fromStdString(ini.GetValue(section, key)));
+            }
+        }
+        else if(section == "comment")
+        {
+            for(auto & key : ini.Keys(section))
+            {
+                bool ok = false;
+                auto romAddr = QString(key.c_str()).toUShort(&ok, 16);
+                if(ok)
+                    setRomComment(romAddr, QString::fromStdString(ini.GetValue(section, key)));
+            }
+        }
+        else
+        {
+            qDebug() << "unsupported section" << section.c_str();
+        }
+    }
+    return true;
 }
 
 void Database::clear()
 {
     romLabels.clear();
     romComments.clear();
+    romRanges.clear();
+    globalRamLabels.clear();
+    globalRamBitLabels.clear();
 }
 
 QString Database::findRomLabelByAddr(uint16_t addr) const

@@ -4,6 +4,7 @@
 #include <QPlainTextEdit>
 #include "DisassemblerHighlighter.h"
 #include "DisassemblerBackend.h"
+#include "XrefsDialog.h"
 
 class DisassemblerTextEdit : public QPlainTextEdit
 {
@@ -16,17 +17,25 @@ public:
     uint16_t selectedAddr() const;
     Token* selectedToken() const;
 
-    void loadCfg(const QString & file);
+    bool loadCfg(const QString & file);
+    bool saveCfg(const QString & file);
     void loadRom(const QString & file);
     void refreshRom();
 
+public slots:
+    bool gotoAddress(uint16_t addr);
+    void xrefsRejectedSlot();
+
 protected:
     void keyPressEvent(QKeyEvent*) override;
+    void mouseDoubleClickEvent(QMouseEvent*) override;
 
 private:
     DisassemblerHighlighter* mHighlighter;
     QColor disassemblerBackground = "#FFF8F0";
     DisassemblerBackend mBackend;
+    XrefsDialog* mXrefsDialog;
+    uint16_t mOldXrefsAddr = 0;
 };
 
 #endif // DISASSEMBLERTEXTEDIT_H

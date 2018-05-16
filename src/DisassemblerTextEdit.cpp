@@ -5,7 +5,7 @@
 #include <QMessageBox>
 #include <QTextDocumentFragment>
 
-#include "Utf8Ini/Utf8Ini.h"
+#include "XrefsDialog.h"
 
 DisassemblerTextEdit::DisassemblerTextEdit(QWidget *parent) : QPlainTextEdit(parent)
 {
@@ -15,6 +15,9 @@ DisassemblerTextEdit::DisassemblerTextEdit(QWidget *parent) : QPlainTextEdit(par
     QPalette p;
     p.setColor(QPalette::Base, disassemblerBackground);
     setPalette(p);
+    mXrefsDialog = new XrefsDialog(this);
+    connect(mXrefsDialog, SIGNAL(gotoAddress(uint16_t)), this, SLOT(gotoAddress(uint16_t)));
+    connect(mXrefsDialog, SIGNAL(rejected()), this, SLOT(xrefsRejectedSlot()));
 }
 
 std::vector<Token>* DisassemblerTextEdit::selectedLine() const
@@ -49,129 +52,54 @@ Token* DisassemblerTextEdit::selectedToken() const
     return nullptr;
 }
 
-void DisassemblerTextEdit::loadCfg(const QString & file)
+bool DisassemblerTextEdit::gotoAddress(uint16_t addr)
 {
-    //TODO: fix some duplicate code
-    QFile f(file);
-    if(!f.open(QFile::ReadOnly | QFile::Text))
+    auto diff = qAbs(selectedAddr() - addr);
+    QTextBlock block = document()->findBlockByLineNumber(addr);
+    if(!block.isValid())
+        return false;
+
+    if(diff > 15)
     {
-        QMessageBox::warning(this, "Error", "Failed to open file...");
-        return;
+        moveCursor(QTextCursor::End);
+        setTextCursor(QTextCursor(block));
+        auto cursor = textCursor();
+        cursor.movePosition(QTextCursor::Up, QTextCursor::MoveAnchor, 10);
+        setTextCursor(cursor);
     }
-    auto data = f.readAll().toStdString();
-    Utf8Ini ini;
-    int errorLine = -1;
-    if(!ini.Deserialize(data, errorLine))
+    setTextCursor(QTextCursor(block));
+    return true;
+}
+
+void DisassemblerTextEdit::xrefsRejectedSlot()
+{
+    gotoAddress(mOldXrefsAddr);
+}
+
+bool DisassemblerTextEdit::loadCfg(const QString & file)
+{
+    auto res = QMessageBox::question(this, "Clear database?", "Should I clear the previous database?\n\nProgress may be lost...", QMessageBox::Yes, QMessageBox::No);
+    if(res == QMessageBox::Yes)
+        mBackend.db.clear();
+    if(!mBackend.db.load(file))
     {
-        QMessageBox::warning(this, "Error", QString("Failed to deserialize INI (line %d)").arg(errorLine));
-        return;
+        QMessageBox::warning(this, "Error", "Failed to load database...");
+        return false;
     }
-    for(auto & section : ini.Sections())
-    {
-        auto qsection = QString::fromStdString(section);
-        if(section == "chip")
-        {
-            //ignore
-        }
-        else if(section == "ram")
-        {
-            for(auto & key : ini.Keys(section))
-            {
-                bool ok = false;
-                auto ramAddrText = QString::fromStdString(key);
-                auto bitIdx = ramAddrText.indexOf('.');
-                if(bitIdx != -1)
-                {
-                    bool ok1 = false, ok2 = false;
-                    auto ramAddr = ramAddrText.left(bitIdx).toUShort(&ok1, 16);
-                    auto bitAddr = ramAddrText.right(1).toUShort(&ok2);
-                    if(ok1 && ok2)
-                        mBackend.db.setGlobalRamBitLabel(ramAddr, bitAddr, QString::fromStdString(ini.GetValue(section, key)));
-                    else
-                        qDebug() << "bit nein";
-                }
-                else
-                {
-                    auto ramAddr = ramAddrText.toUShort(&ok, 16);
-                    if(ok)
-                        mBackend.db.setGlobalRamLabel(ramAddr, QString::fromStdString(ini.GetValue(section, key)));
-                }
-            }
-        }
-        else if(qsection.startsWith("ram@"))
-        {
-            auto midIdx = qsection.indexOf('-');
-            if(midIdx != -1)
-            {
-                auto startText = qsection.mid(4, midIdx - 4);
-                auto endText = qsection.mid(midIdx + 1);
-                bool ok1 = false, ok2 = false;
-                auto start = startText.toUShort(&ok1, 16);
-                auto end = endText.toUShort(&ok2, 16);
-                if(ok1 && ok2)
-                {
-                    auto romRange = mBackend.db.addRomRange(start, end);
-                    for(auto & key : ini.Keys(section))
-                    {
-                        bool ok = false;
-                        auto ramAddrText = QString::fromStdString(key);
-                        auto bitIdx = ramAddrText.indexOf('.');
-                        if(bitIdx != -1)
-                        {
-                            bool ok1 = false, ok2 = false;
-                            auto ramAddr = ramAddrText.left(bitIdx).toUShort(&ok1, 16);
-                            auto bitAddr = ramAddrText.right(1).toUShort(&ok2);
-                            if(ok1 && ok2)
-                                romRange->ramBitLabels.insert({ramAddr, bitAddr}, QString::fromStdString(ini.GetValue(section, key)));
-                            else
-                                qDebug() << "bit nein";
-                        }
-                        else
-                        {
-                            auto ramAddr = ramAddrText.toUShort(&ok, 16);
-                            if(ok)
-                                romRange->ramLabels.insert(ramAddr, QString::fromStdString(ini.GetValue(section, key)));
-                        }
-                    }
-                }
-                else
-                {
-                    QMessageBox::warning(this, "Error", QString("Incorrectly formatted section '%1'").arg(qsection));
-                    return;
-                }
-            }
-            else
-            {
-                QMessageBox::warning(this, "Error", QString("Incorrectly formatted section '%1'").arg(qsection));
-                return;
-            }
-        }
-        else if(section == "rom")
-        {
-            for(auto & key : ini.Keys(section))
-            {
-                bool ok = false;
-                auto romAddr = QString(key.c_str()).toUShort(&ok, 16);
-                if(ok)
-                    mBackend.db.setRomLabel(romAddr, QString::fromStdString(ini.GetValue(section, key)));
-            }
-        }
-        else if(section == "comment")
-        {
-            for(auto & key : ini.Keys(section))
-            {
-                bool ok = false;
-                auto romAddr = QString(key.c_str()).toUShort(&ok, 16);
-                if(ok)
-                    mBackend.db.setRomComment(romAddr, QString::fromStdString(ini.GetValue(section, key)));
-            }
-        }
-        else
-        {
-            qDebug() << "unsupported section" << section.c_str();
-        }
-    }
+    QMessageBox::information(this, "Ok", "Database loaded!");
     refreshRom();
+    return true;
+}
+
+bool DisassemblerTextEdit::saveCfg(const QString &file)
+{
+    if(!mBackend.db.save(file))
+    {
+        QMessageBox::warning(this, "Error", "Failed to save database...");
+        return false;
+    }
+    QMessageBox::information(this, "Ok", "Database saved!");
+    return true;
 }
 
 void DisassemblerTextEdit::keyPressEvent(QKeyEvent* event)
@@ -182,23 +110,14 @@ void DisassemblerTextEdit::keyPressEvent(QKeyEvent* event)
         QPlainTextEdit::keyPressEvent(event);
     else if(text == "g") // Go to
     {
-        QString curAddr = "1337";
+        QString curAddr = QString().sprintf("0x%04x", selectedAddr());
         bool ok = false;
         QString addrText = QInputDialog::getText(this, "Go to", "ROM Address: ", QLineEdit::Normal, curAddr, &ok);
         if(ok && !addrText.isEmpty())
         {
             auto addr = addrText.toUShort(&ok, 16);
-            if(ok)
-            {
-                QTextBlock block = document()->findBlockByLineNumber(addr);
-                if(block.isValid())
-                {
-                    QTextCursor newCursor(block);
-                    setTextCursor(newCursor);
-                    return;
-                }
-            }
-            QMessageBox::warning(this, "Error", QString("Invalid address %1").arg(addrText));
+            if(!ok || !gotoAddress(addr))
+                QMessageBox::warning(this, "Error", QString("Invalid address %1").arg(addrText));
         }
     }
     else if(text == "n") // Label
@@ -313,6 +232,37 @@ void DisassemblerTextEdit::keyPressEvent(QKeyEvent* event)
         {
             mBackend.db.setRomComment(addr, comment);
             refreshRom();
+        }
+    }
+    else if(text == "x") // Cross references
+    {
+        QVector<QPair<uint16_t, QString>> xrefs;
+        for(uint16_t xref : mBackend.lineInfo[selectedAddr()].referencedFrom)
+        {
+            auto tokens = mBackend.lineInfo[xref].toTokens(mBackend.db);
+            QString text;
+            for(auto & token : tokens)
+                text.append(token.text);
+            xrefs.append({xref, text});
+        }
+        mOldXrefsAddr = selectedAddr();
+        mXrefsDialog->setXrefs(xrefs);
+        mXrefsDialog->showNormal();
+    }
+}
+
+void DisassemblerTextEdit::mouseDoubleClickEvent(QMouseEvent*)
+{
+    auto t = selectedToken();
+    if(t)
+    {
+        switch(t->type)
+        {
+        case Token::Rom:
+            gotoAddress(t->value);
+            break;
+        default:
+            qDebug() << "unimplemented double click token";
         }
     }
 }

@@ -60,6 +60,8 @@
     <addaction name="action_Load_ROM"/>
     <addaction name="actionRefresh"/>
     <addaction name="actionImport_dissn8_cfg"/>
+    <addaction name="actionSave_Database"/>
+    <addaction name="actionSave_Database_as"/>
     <addaction name="actionROM_Ranges"/>
    </widget>
    <addaction name="menu_File"/>
@@ -85,12 +87,22 @@
   </action>
   <action name="actionImport_dissn8_cfg">
    <property name="text">
-    <string>Import dissn8 cfg</string>
+    <string>Load Database</string>
    </property>
   </action>
   <action name="actionROM_Ranges">
    <property name="text">
     <string>ROM Ranges...</string>
+   </property>
+  </action>
+  <action name="actionSave_Database">
+   <property name="text">
+    <string>Save Database</string>
+   </property>
+  </action>
+  <action name="actionSave_Database_as">
+   <property name="text">
+    <string>Save Database As...</string>
    </property>
   </action>
  </widget>
