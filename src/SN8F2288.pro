@@ -38,7 +38,8 @@ SOURCES += \
     RangesDialog.cpp \
     XrefsDialog.cpp \
     Core.cpp \
-    ChipCpu.cpp
+    ChipCpu.cpp \
+    Config.cpp
 
 HEADERS += \
     MainWindow.h \
@@ -52,7 +53,8 @@ HEADERS += \
     RangesDialog.h \
     XrefsDialog.h \
     Core.h \
-    ChipCpu.h
+    ChipCpu.h \
+    Config.h
 
 FORMS += \
     MainWindow.ui \

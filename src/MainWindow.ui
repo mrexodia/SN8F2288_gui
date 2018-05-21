@@ -14,7 +14,7 @@
    <string>SN8F2288</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QHBoxLayout" name="horizontalLayout">
+   <layout class="QVBoxLayout" name="verticalLayout">
     <property name="leftMargin">
      <number>5</number>
     </property>
@@ -28,18 +28,27 @@
      <number>5</number>
     </property>
     <item>
-     <widget class="DisassemblerTextEdit" name="disassembler">
-      <property name="font">
-       <font>
-        <family>Courier New</family>
-       </font>
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
       </property>
-      <property name="lineWrapMode">
-       <enum>QPlainTextEdit::WidgetWidth</enum>
+      <property name="handleWidth">
+       <number>5</number>
       </property>
-      <property name="readOnly">
-       <bool>false</bool>
-      </property>
+      <widget class="DisassemblerTextEdit" name="disassembler">
+       <property name="font">
+        <font>
+         <family>Courier New</family>
+        </font>
+       </property>
+       <property name="lineWrapMode">
+        <enum>QPlainTextEdit::WidgetWidth</enum>
+       </property>
+       <property name="readOnly">
+        <bool>false</bool>
+       </property>
+      </widget>
+      <widget class="QTableWidget" name="registerTable"/>
      </widget>
     </item>
    </layout>

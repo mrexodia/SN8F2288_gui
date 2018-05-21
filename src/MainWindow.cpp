@@ -7,7 +7,7 @@
 #include <QDebug>
 #include <QCloseEvent>
 #include <QMessageBox>
-
+#include "Config.h"
 #include "RangesDialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -16,6 +16,13 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     mBaseTitle = windowTitle();
+    ui->splitter->setStretchFactor(0, 70);
+    ui->splitter->setStretchFactor(1, 30);
+
+    QPalette p;
+    p.setColor(QPalette::Base, Config().disassemblerBackground);
+
+    setPalette(p);
 }
 
 MainWindow::~MainWindow()

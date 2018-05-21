@@ -4,7 +4,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QTextDocumentFragment>
-
+#include "Config.h"
 #include "XrefsDialog.h"
 
 DisassemblerTextEdit::DisassemblerTextEdit(QWidget *parent) : QPlainTextEdit(parent)
@@ -13,7 +13,7 @@ DisassemblerTextEdit::DisassemblerTextEdit(QWidget *parent) : QPlainTextEdit(par
     mHighlighter = new DisassemblerHighlighter(document());
     mHighlighter->tokenLines = &mBackend.tokenLines;
     QPalette p;
-    p.setColor(QPalette::Base, disassemblerBackground);
+    p.setColor(QPalette::Base, Config().disassemblerBackground);
     setPalette(p);
     mXrefsDialog = new XrefsDialog(this);
     connect(mXrefsDialog, SIGNAL(gotoAddress(uint16_t)), this, SLOT(gotoAddress(uint16_t)));

@@ -16,9 +16,14 @@ signals:
     void stepCpu();
     void runCpu();
 
+signals:
+    void cpuPaused();
+    void cpuResumed();
+
 private slots:
     void haltCpuSlot();
     void stepCpuSlot();
+    void stepCpuClockSlot();
     void runCpuSlot();
 
 protected:

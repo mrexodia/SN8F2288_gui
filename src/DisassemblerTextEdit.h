@@ -32,7 +32,7 @@ protected:
 
 private:
     DisassemblerHighlighter* mHighlighter;
-    QColor disassemblerBackground = "#FFF8F0";
+
     DisassemblerBackend mBackend;
     XrefsDialog* mXrefsDialog;
     uint16_t mOldXrefsAddr = 0;
