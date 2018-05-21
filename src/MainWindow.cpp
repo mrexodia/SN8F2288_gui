@@ -5,6 +5,8 @@
 #include <QFileDialog>
 #include <QStandardPaths>
 #include <QDebug>
+#include <QCloseEvent>
+#include <QMessageBox>
 
 #include "RangesDialog.h"
 
@@ -21,6 +23,12 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::closeEvent(QCloseEvent* e)
+{
+    maybeSave();
+    QMainWindow::closeEvent(e);
+}
+
 void MainWindow::on_action_Load_ROM_triggered()
 {
     /*auto file = QFileDialog::getOpenFileName(this, "Load ROM", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
@@ -28,6 +36,7 @@ void MainWindow::on_action_Load_ROM_triggered()
         return;
     file = QDir::toNativeSeparators(file);
     ui->disassembler->loadRom(file);*/
+    maybeSave();
     mRomPath = "/Users/duncan/Projects/SN8F2288_disassembler/cmake-build-debug/lenovo.rom";
     ui->disassembler->loadRom(mRomPath);
     updateTitle();
@@ -54,7 +63,7 @@ void MainWindow::on_actionImport_dissn8_cfg_triggered()
 
 void MainWindow::on_actionROM_Ranges_triggered()
 {
-    RangesDialog ranges(&ui->disassembler->backend()->db, this);
+    RangesDialog ranges(&Core::db(), this);
     if(ranges.exec() != QDialog::Accepted)
         return;
 }
@@ -80,6 +89,11 @@ void MainWindow::on_actionSave_Database_as_triggered()
     }
 }
 
+void MainWindow::on_actionStep_triggered()
+{
+    Core::cpu()->stepCpu();
+}
+
 void MainWindow::updateTitle()
 {
     auto getFilename = [](const QString & file)
@@ -93,4 +107,13 @@ void MainWindow::updateTitle()
     if(!mDbPath.isEmpty())
         newTitle += QString(" [%1]").arg(getFilename(mDbPath));
     setWindowTitle(newTitle);
+}
+
+void MainWindow::maybeSave()
+{
+    if(Core::db().unsavedChanges())
+    {
+        if(QMessageBox::question(this, "Save database?", "There are unsaved changes in the database, do you want to save?", QMessageBox::Yes | QMessageBox::Default, QMessageBox::No | QMessageBox::Escape) == QMessageBox::Yes)
+            on_actionSave_Database_triggered();
+    }
 }

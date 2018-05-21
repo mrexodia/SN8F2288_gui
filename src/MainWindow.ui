@@ -64,7 +64,14 @@
     <addaction name="actionSave_Database_as"/>
     <addaction name="actionROM_Ranges"/>
    </widget>
+   <widget class="QMenu" name="menuDebug">
+    <property name="title">
+     <string>Debug</string>
+    </property>
+    <addaction name="actionStep"/>
+   </widget>
    <addaction name="menu_File"/>
+   <addaction name="menuDebug"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -103,6 +110,11 @@
   <action name="actionSave_Database_as">
    <property name="text">
     <string>Save Database As...</string>
+   </property>
+  </action>
+  <action name="actionStep">
+   <property name="text">
+    <string>Step</string>
    </property>
   </action>
  </widget>

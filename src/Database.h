@@ -16,9 +16,11 @@ public:
         QMap<QPair<uint16_t, uint8_t>, QString> ramBitLabels;
     };
 
-    bool save(const QString & file) const;
+    bool save(const QString & file);
     bool load(const QString & file);
     void clear();
+    bool unsavedChanges() const { return hasUnsavedChanges; }
+    void setUnsavedChanges(bool value = true) { hasUnsavedChanges = value; }
 
     QString findRomLabelByAddr(uint16_t addr) const;
     bool findRomLabelByName(const QString & label, uint16_t & addr) const;
@@ -33,8 +35,7 @@ public:
     QString findGlobalRamBitLabelByAddr(uint16_t addr, uint8_t bit) const;
     void setGlobalRamBitLabel(uint16_t addr, uint8_t bit, const QString & label);
 
-    RomRange const* findRomRange(uint16_t romAddr) const;
-    RomRange* findRomRange(uint16_t romAddr);
+    RomRange const* findRomRangeConst(uint16_t romAddr) const;
     RomRange* addRomRange(uint16_t romStart, uint16_t romEnd);
     QVector<QPair<uint16_t, uint16_t>> getRomRanges() const;
     bool deleteRomRange(uint16_t romAddr);
@@ -46,12 +47,16 @@ public:
     void setLocalRamBitLabel(uint16_t romAddr, uint16_t ramAddr, uint8_t bit, const QString & label);
 
 private:
+    bool hasUnsavedChanges = false;
+
     QMap<uint16_t, QString> romLabels;
     QMap<uint16_t, QString> romComments;
 
     QVector<RomRange> romRanges;
     QMap<uint16_t, QString> globalRamLabels;
     QMap<QPair<uint16_t, uint8_t>, QString> globalRamBitLabels;
+
+    RomRange* findRomRange(uint16_t romAddr);
 };
 
 #endif // DATABASE_H

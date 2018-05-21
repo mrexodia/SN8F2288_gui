@@ -4,7 +4,7 @@
 
 #include "Utf8Ini/Utf8Ini.h"
 
-bool Database::save(const QString & file) const
+bool Database::save(const QString & file)
 {
     QFile f(file);
     if(!f.open(QFile::WriteOnly | QFile::Text))
@@ -35,11 +35,13 @@ bool Database::save(const QString & file) const
     saveRamLabels("comment", romComments);
     f.write(ini.Serialize().c_str());
     f.close();
+    setUnsavedChanges(false);
     return true;
 }
 
 bool Database::load(const QString & file)
 {
+    auto oldUnsavedChanges = unsavedChanges();
     QFile f(file);
     if(!f.open(QFile::ReadOnly | QFile::Text))
     {
@@ -160,6 +162,7 @@ bool Database::load(const QString & file)
             qDebug() << "unsupported section" << section.c_str();
         }
     }
+    setUnsavedChanges(oldUnsavedChanges);
     return true;
 }
 
@@ -170,6 +173,7 @@ void Database::clear()
     romRanges.clear();
     globalRamLabels.clear();
     globalRamBitLabels.clear();
+    setUnsavedChanges(false);
 }
 
 QString Database::findRomLabelByAddr(uint16_t addr) const
@@ -197,6 +201,7 @@ bool Database::findRomLabelByName(const QString & label, uint16_t & addr) const
 void Database::setRomLabel(uint16_t addr, const QString & label)
 {
     romLabels[addr] = label;
+    setUnsavedChanges();
 }
 
 QString Database::findRomCommentByAddr(uint16_t addr) const
@@ -211,6 +216,7 @@ QString Database::findRomCommentByAddr(uint16_t addr) const
 void Database::setRomComment(uint16_t addr, const QString & comment)
 {
     romComments[addr] = comment;
+    setUnsavedChanges();
 }
 
 QString Database::findGlobalRamLabelByAddr(uint16_t addr) const
@@ -225,6 +231,7 @@ QString Database::findGlobalRamLabelByAddr(uint16_t addr) const
 void Database::setGlobalRamLabel(uint16_t addr, const QString & label)
 {
     globalRamLabels[addr] = label;
+    setUnsavedChanges();
 }
 
 QString Database::findGlobalRamBitLabelByAddr(uint16_t addr, uint8_t bit) const
@@ -239,9 +246,10 @@ QString Database::findGlobalRamBitLabelByAddr(uint16_t addr, uint8_t bit) const
 void Database::setGlobalRamBitLabel(uint16_t addr, uint8_t bit, const QString & label)
 {
     globalRamBitLabels[{addr, bit}] = label;
+    setUnsavedChanges();
 }
 
-Database::RomRange const* Database::findRomRange(uint16_t romAddr) const
+Database::RomRange const* Database::findRomRangeConst(uint16_t romAddr) const
 {
     for(const RomRange & range : romRanges)
         if(romAddr >= range.romStart && romAddr <= range.romEnd)
@@ -275,6 +283,7 @@ Database::RomRange* Database::addRomRange(uint16_t romStart, uint16_t romEnd)
     newRange.romStart = romStart;
     newRange.romEnd = romEnd;
     romRanges.push_back(newRange);
+    setUnsavedChanges();
     return &romRanges.back();
 }
 
@@ -293,6 +302,7 @@ bool Database::deleteRomRange(uint16_t romAddr)
         if(romAddr >= it->romStart && romAddr <= it->romEnd)
         {
             romRanges.erase(it);
+            setUnsavedChanges();
             return true;
         }
     }
@@ -301,7 +311,7 @@ bool Database::deleteRomRange(uint16_t romAddr)
 
 QString Database::findLocalRamLabelByAddr(uint16_t romAddr, uint16_t ramAddr) const
 {
-    auto range = findRomRange(romAddr);
+    auto range = findRomRangeConst(romAddr);
     QString label;
     if(range)
     {
@@ -317,12 +327,15 @@ void Database::setLocalRamLabel(uint16_t romAddr, uint16_t ramAddr, const QStrin
     //TODO: error handling
     auto range = findRomRange(romAddr);
     if(range)
+    {
         range->ramLabels[ramAddr] = label;
+        setUnsavedChanges();
+    }
 }
 
 QString Database::findLocalRamBitLabelByAddr(uint16_t romAddr, uint16_t ramAddr, uint8_t bit) const
 {
-    auto range = findRomRange(romAddr);
+    auto range = findRomRangeConst(romAddr);
     QString label;
     if(range)
     {
@@ -338,5 +351,8 @@ void Database::setLocalRamBitLabel(uint16_t romAddr, uint16_t ramAddr, uint8_t b
     //TODO: error handling
     auto range = findRomRange(romAddr);
     if(range)
+    {
         range->ramBitLabels[{ramAddr, bit}] = label;
+        setUnsavedChanges();
+    }
 }

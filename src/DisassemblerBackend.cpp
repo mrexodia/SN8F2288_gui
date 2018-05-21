@@ -2,6 +2,8 @@
 
 #include <QDebug>
 #include <queue>
+#include <QThread>
+#include <QTimer>"
 
 DisassemblerBackend::DisassemblerBackend()
 {
@@ -139,7 +141,8 @@ bool DisassemblerBackend::disassemble(DisasmLine & line, vector<uint16_t> & bran
 
 void DisassemblerBackend::loadRom(const QString & file)
 {
-    //TODO: make sure current database is saved & cleared
+    auto & chip = Core::chip();
+    Core::db().clear();
     auto romData = readFile(file.toUtf8().constData());
     if(!chip.flashRom(romData))
     {
@@ -156,8 +159,10 @@ void DisassemblerBackend::loadRom(const QString & file)
         lineInfo[i].data = chip.rom.get(uint16_t(i));
     }
 
-    db.setRomLabel(0, "_reset");
-    db.setRomLabel(8, "_interrupt");
+    //TODO: load chip register definitions
+    Core::db().setRomLabel(0, "_reset");
+    Core::db().setRomLabel(8, "_interrupt");
+    Core::db().setUnsavedChanges(false);
 
     queue<uint16_t> q;
     q.push(0); //reset
@@ -181,8 +186,10 @@ void DisassemblerBackend::loadRom(const QString & file)
 
         for(auto branch : branches)
         {
-            lineInfo[branch].referencedFrom.push_back(curAddr);
             q.push(branch);
+            if(curLine.entry.branchType == NEXTI) //don't create xrefs for the previous instruction
+                continue;
+            lineInfo[branch].referencedFrom.push_back(curAddr);
         }
     }
 

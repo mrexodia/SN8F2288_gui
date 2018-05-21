@@ -4,7 +4,9 @@
 #include <QString>
 #include <QStringList>
 
-#include "sn8f2288_chip.h"
+#include <vector>
+
+#include "Core.h"
 #include "Token.h"
 #include "Database.h"
 
@@ -13,8 +15,7 @@ class DisassemblerBackend
 public:
     DisassemblerBackend();
 
-    Database db;
-    vector<vector<Token>> tokenLines;
+    std::vector<std::vector<Token>> tokenLines;
 
     struct Operand
     {
@@ -38,14 +39,14 @@ public:
         bool valid = false;
         uint16_t addr = 0;
         uint16_t data = 0;
-        vector<uint16_t> referencedFrom;
+        std::vector<uint16_t> referencedFrom;
 
         //QString label;
         InstrEntry entry;
         Operand operands[2] = { Operand(), Operand() };
         //QString comment;
 
-        vector<Token> toTokens(const Database & db) const
+        std::vector<Token> toTokens(const Database & db) const
         {
             vector<Token> line;
             line.push_back(Token::addr(addr));
@@ -146,8 +147,6 @@ public:
 
     bool disassemble(DisasmLine & line, vector<uint16_t> & branches) const;
     void loadRom(const QString & file);
-
-    SN8F2288 chip;
 };
 
 #endif // DISASSEMBLERBACKEND_H

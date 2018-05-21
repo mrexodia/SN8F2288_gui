@@ -36,7 +36,9 @@ SOURCES += \
     DisassemblerHighlighter.cpp \
     DisassemblerBackend.cpp \
     RangesDialog.cpp \
-    XrefsDialog.cpp
+    XrefsDialog.cpp \
+    Core.cpp \
+    ChipCpu.cpp
 
 HEADERS += \
     MainWindow.h \
@@ -48,7 +50,9 @@ HEADERS += \
     DisassemblerBackend.h \
     Utf8Ini/Utf8Ini.h \
     RangesDialog.h \
-    XrefsDialog.h
+    XrefsDialog.h \
+    Core.h \
+    ChipCpu.h
 
 FORMS += \
     MainWindow.ui \

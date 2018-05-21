@@ -80,8 +80,8 @@ bool DisassemblerTextEdit::loadCfg(const QString & file)
 {
     auto res = QMessageBox::question(this, "Clear database?", "Should I clear the previous database?\n\nProgress may be lost...", QMessageBox::Yes, QMessageBox::No);
     if(res == QMessageBox::Yes)
-        mBackend.db.clear();
-    if(!mBackend.db.load(file))
+        Core::db().clear();
+    if(!Core::db().load(file))
     {
         QMessageBox::warning(this, "Error", "Failed to load database...");
         return false;
@@ -93,7 +93,7 @@ bool DisassemblerTextEdit::loadCfg(const QString & file)
 
 bool DisassemblerTextEdit::saveCfg(const QString &file)
 {
-    if(!mBackend.db.save(file))
+    if(!Core::db().save(file))
     {
         QMessageBox::warning(this, "Error", "Failed to save database...");
         return false;
@@ -133,13 +133,13 @@ void DisassemblerTextEdit::keyPressEvent(QKeyEvent* event)
             case Token::Rom:
             {
                 auto addr = t->value;
-                QString label = mBackend.db.findRomLabelByAddr(addr);
+                QString label = Core::db().findRomLabelByAddr(addr);
                 bool ok = false;
                 auto title = QString().sprintf("ROM label at 0x%04x", addr);
                 label = QInputDialog::getText(this, title, title, QLineEdit::Normal, label, &ok, Qt::Popup);
                 if(ok)
                 {
-                    mBackend.db.setRomLabel(addr, label);
+                    Core::db().setRomLabel(addr, label);
                     refreshRom();
                 }
                 break;
@@ -147,7 +147,7 @@ void DisassemblerTextEdit::keyPressEvent(QKeyEvent* event)
 
             case Token::Ram:
             {
-                auto range = mBackend.db.findRomRange(addr);
+                auto range = Core::db().findRomRangeConst(addr);
                 if(range)
                 {
                     auto found = range->ramLabels.find(t->value);
@@ -157,19 +157,19 @@ void DisassemblerTextEdit::keyPressEvent(QKeyEvent* event)
                     label = QInputDialog::getText(this, title, title, QLineEdit::Normal, label, &ok, Qt::Popup);
                     if(ok)
                     {
-                        range->ramLabels[t->value] = label;
+                        Core::db().setLocalRamLabel(addr, t->value, label);
                         refreshRom();
                     }
                 }
                 else
                 {
-                    QString label = mBackend.db.findGlobalRamLabelByAddr(t->value);
+                    QString label = Core::db().findGlobalRamLabelByAddr(t->value);
                     bool ok = false;
                     auto title = QString().sprintf("Global RAM label at 0x%02x", t->value);
                     label = QInputDialog::getText(this, title, title, QLineEdit::Normal, label, &ok, Qt::Popup);
                     if(ok)
                     {
-                        mBackend.db.setGlobalRamLabel(t->value, label);
+                        Core::db().setGlobalRamLabel(t->value, label);
                         refreshRom();
                     }
                 }
@@ -178,7 +178,7 @@ void DisassemblerTextEdit::keyPressEvent(QKeyEvent* event)
 
             case Token::Bit:
             {
-                auto range = mBackend.db.findRomRange(addr);
+                auto range = Core::db().findRomRangeConst(addr);
                 if(range)
                 {
                     auto found = range->ramBitLabels.find({t->value, t->bit});
@@ -188,19 +188,19 @@ void DisassemblerTextEdit::keyPressEvent(QKeyEvent* event)
                     label = QInputDialog::getText(this, title, title, QLineEdit::Normal, label, &ok, Qt::Popup);
                     if(ok)
                     {
-                        range->ramBitLabels[{t->value, t->bit}] = label;
+                        Core::db().setLocalRamBitLabel(addr, t->value, t->bit, label);
                         refreshRom();
                     }
                 }
                 else
                 {
-                    QString label = mBackend.db.findGlobalRamBitLabelByAddr(t->value, t->bit);
+                    QString label = Core::db().findGlobalRamBitLabelByAddr(t->value, t->bit);
                     bool ok = false;
                     auto title = QString().sprintf("Global RAM label at 0x%02x.%d", t->value, t->bit);
                     label = QInputDialog::getText(this, title, title, QLineEdit::Normal, label, &ok, Qt::Popup);
                     if(ok)
                     {
-                        mBackend.db.setGlobalRamBitLabel(t->value, t->bit, label);
+                        Core::db().setGlobalRamBitLabel(t->value, t->bit, label);
                         refreshRom();
                     }
                 }
@@ -224,13 +224,13 @@ void DisassemblerTextEdit::keyPressEvent(QKeyEvent* event)
     else if(text == ";") // Comment
     {
         auto addr = selectedAddr();
-        QString comment = mBackend.db.findRomCommentByAddr(addr);
+        QString comment = Core::db().findRomCommentByAddr(addr);
         bool ok = false;
         auto title = QString().sprintf("Set comment at 0x%04x", addr);
         comment = QInputDialog::getText(this, title, title, QLineEdit::Normal, comment, &ok, Qt::Popup);
         if(ok)
         {
-            mBackend.db.setRomComment(addr, comment);
+            Core::db().setRomComment(addr, comment);
             refreshRom();
         }
     }
@@ -239,15 +239,18 @@ void DisassemblerTextEdit::keyPressEvent(QKeyEvent* event)
         QVector<QPair<uint16_t, QString>> xrefs;
         for(uint16_t xref : mBackend.lineInfo[selectedAddr()].referencedFrom)
         {
-            auto tokens = mBackend.lineInfo[xref].toTokens(mBackend.db);
+            auto tokens = mBackend.lineInfo[xref].toTokens(Core::db());
             QString text;
             for(auto & token : tokens)
                 text.append(token.text);
             xrefs.append({xref, text});
         }
-        mOldXrefsAddr = selectedAddr();
-        mXrefsDialog->setXrefs(xrefs);
-        mXrefsDialog->showNormal();
+        if(!xrefs.empty())
+        {
+            mOldXrefsAddr = selectedAddr();
+            mXrefsDialog->setXrefs(xrefs);
+            mXrefsDialog->showNormal();
+        }
     }
 }
 
@@ -280,7 +283,7 @@ void DisassemblerTextEdit::refreshRom()
 
     //do token conversion
     for(size_t i = 0; i < mBackend.lineInfo.size(); i++)
-        mBackend.tokenLines[i] = mBackend.lineInfo[i].toTokens(mBackend.db);
+        mBackend.tokenLines[i] = mBackend.lineInfo[i].toTokens(Core::db());
 
     //remove nops from the end
     size_t displaySize = mBackend.lineInfo.size();

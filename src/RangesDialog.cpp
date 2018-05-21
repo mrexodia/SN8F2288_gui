@@ -44,7 +44,7 @@ void RangesDialog::on_listWidget_customContextMenuRequested(const QPoint & pos)
         if(ok)
         {
             QPair<uint16_t, uint16_t> range;
-            if(parseRange(text, range) && range.first < range.second && range.first < 0x3000 && range.second < 0x3000 && !db->findRomRange(range.first) && !db->findRomRange(range.second))
+            if(parseRange(text, range) && range.first < range.second && range.first < 0x3000 && range.second < 0x3000 && !db->findRomRangeConst(range.first) && !db->findRomRangeConst(range.second))
             {
                 db->addRomRange(range.first, range.second);
                 ui->listWidget->addItem(QString().sprintf("0x%04x-0x%04x", range.first, range.second));
@@ -61,7 +61,7 @@ void RangesDialog::on_listWidget_customContextMenuRequested(const QPoint & pos)
             {
                 QPair<uint16_t, uint16_t> range;
                 parseRange(item->text(), range);
-                auto found = db->findRomRange(range.first);
+                auto found = db->findRomRangeConst(range.first);
                 if(found)
                 {
                     auto count = found->ramBitLabels.count() + found->ramLabels.count();
