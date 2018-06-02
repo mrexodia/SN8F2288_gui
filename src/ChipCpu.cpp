@@ -1,44 +1,132 @@
 #include "ChipCpu.h"
+#include <QTime>
+#include <QDebug>
 
-ChipCpu::ChipCpu(SN8F2288* chip, QObject* parent)
-    : QThread(parent), chip(chip)
-{
-    connect(this, SIGNAL(haltCpu()), this, SLOT(haltCpuSlot()), Qt::BlockingQueuedConnection);
-    connect(this, SIGNAL(stepCpu()), this, SLOT(stepCpuSlot()), Qt::BlockingQueuedConnection);
-    connect(this, SIGNAL(runCpu()), this, SLOT(runCpuSlot()), Qt::BlockingQueuedConnection);
-    clock = new QTimer(this);
-    connect(clock, SIGNAL(timeout()), this, SLOT(stepCpuClockSlot()));
-}
 
-void ChipCpu::haltCpuSlot()
+ChipCpu::ChipCpu(SN8F2288* chip, QObject* parent) : QThread(parent), chip(chip) {}
+
+void ChipCpu::run()
 {
-    if(clock->isActive())
+    //TODO: refactor this to use locks, etc
+    auto told = QTime::currentTime();
+    auto count = 0;
+    while(bCpuActive)
     {
-        clock->stop();
-        emit cpuPaused();
+        bWaiting = true;
+        while(bWaiting)
+            QThread::usleep(1);
+        bActionReceived = true;
+
+        switch(action)
+        {
+        case Kill:
+            break;
+        case Step:
+            if(chip->step())
+                paused(SingleStep);
+            else
+                paused(SingleStepFailed);
+            break;
+        case Run:
+            told = QTime::currentTime();
+            bRunning = true;
+            while(bRunning)
+            {
+                /*auto tnew = QTime::currentTime();
+                auto diff = told.msecsTo(tnew);
+                if(diff >= 10000)
+                {
+                    told = tnew;
+                    qDebug() << QString("%1 steps/s").arg(count);
+                    count = 0;
+                }*/
+                if(!chip->step())
+                {
+                    bRunning = false;
+                    paused(RunStepFailed);
+                    goto runFailed;
+                }
+                count++;
+            }
+            paused(RunPaused);
+runFailed:
+            break;
+        }
+        auto tnew = QTime::currentTime();
+        auto diff = told.msecsTo(tnew);
+        qDebug() << QString("%1 steps in %2ms").arg(count).arg(diff);
+        told = tnew;
+        count = 0;
     }
 }
 
-void ChipCpu::stepCpuSlot()
+void ChipCpu::stepCpu()
 {
-    if(!clock->isActive())
+    if(!bCpuActive)
     {
-        chip->step();
-        emit cpuPaused();
+        qDebug() << "trying to step on dead cpu";
+        return;
     }
+    if(bRunning)
+    {
+        //nein
+        return;
+    }
+    bActionReceived = false;
+    action = Step;
+    bWaiting = false;
+    while(!bActionReceived)
+        QThread::usleep(1);
 }
 
-void ChipCpu::stepCpuClockSlot()
+void ChipCpu::runCpu()
 {
-    if(!chip->step())
-        clock->stop();
+    if(!bCpuActive)
+    {
+        qDebug() << "trying to run on dead cpu";
+        return;
+    }
+    if(bRunning)
+    {
+        return;
+    }
+    bActionReceived = false;
+    action = Run;
+    bWaiting = false;
+    while(!bActionReceived)
+        QThread::sleep(1);
 }
 
-void ChipCpu::runCpuSlot()
+void ChipCpu::haltCpu()
 {
-    if(!clock->isActive())
+    if(!bCpuActive)
     {
-        clock->start();
-        emit cpuResumed();
+        qDebug() << "trying to halt dead cpu";
+        return;
     }
+    if(!bRunning)
+    {
+        return;
+    }
+    bWaiting = false;
+    bRunning = false;
+    while(!bWaiting)
+        QThread::sleep(1);
 }
+
+void ChipCpu::stopCpu()
+{
+    if(!bCpuActive)
+    {
+        qDebug() << "trying to kill dead cpu";
+        return;
+    }
+    bActionReceived = false;
+    action = Kill;
+    bWaiting = false;
+
+    bRunning = false;
+    bCpuActive = false;
+}
+
+ChipCpu::~ChipCpu() = default;

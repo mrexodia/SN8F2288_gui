@@ -25,6 +25,7 @@ public:
 public slots:
     bool gotoAddress(uint16_t addr);
     void xrefsRejectedSlot();
+    void cpuPausedSlot(int reason);
 
 protected:
     void keyPressEvent(QKeyEvent*) override;

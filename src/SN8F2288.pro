@@ -39,7 +39,9 @@ SOURCES += \
     XrefsDialog.cpp \
     Core.cpp \
     ChipCpu.cpp \
-    Config.cpp
+    Config.cpp \
+    RegisterTable.cpp \
+    sn8f2288_chip.cpp
 
 HEADERS += \
     MainWindow.h \
@@ -54,7 +56,8 @@ HEADERS += \
     XrefsDialog.h \
     Core.h \
     ChipCpu.h \
-    Config.h
+    Config.h \
+    RegisterTable.h
 
 FORMS += \
     MainWindow.ui \

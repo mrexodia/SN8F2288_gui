@@ -6,6 +6,7 @@
 
 class Core
 {
+    Core();
 public:
     static Core & instance();
     static SN8F2288 & chip();

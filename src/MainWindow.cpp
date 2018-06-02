@@ -18,11 +18,6 @@ MainWindow::MainWindow(QWidget *parent) :
     mBaseTitle = windowTitle();
     ui->splitter->setStretchFactor(0, 70);
     ui->splitter->setStretchFactor(1, 30);
-
-    QPalette p;
-    p.setColor(QPalette::Base, Config().disassemblerBackground);
-
-    setPalette(p);
 }
 
 MainWindow::~MainWindow()
@@ -33,6 +28,8 @@ MainWindow::~MainWindow()
 void MainWindow::closeEvent(QCloseEvent* e)
 {
     maybeSave();
+    Core::cpu()->stopCpu();
+    Core::cpu()->wait();
     QMainWindow::closeEvent(e);
 }
 

@@ -48,7 +48,7 @@
         <bool>false</bool>
        </property>
       </widget>
-      <widget class="QTableWidget" name="registerTable"/>
+      <widget class="RegisterTable" name="registerTable"/>
      </widget>
     </item>
    </layout>
@@ -133,6 +133,11 @@
    <class>DisassemblerTextEdit</class>
    <extends>QPlainTextEdit</extends>
    <header>DisassemblerTextEdit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>RegisterTable</class>
+   <extends>QTableWidget</extends>
+   <header>RegisterTable.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

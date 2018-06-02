@@ -9,28 +9,40 @@ class ChipCpu : public QThread
 {
     Q_OBJECT
 public:
+    enum PauseReason
+    {
+        SingleStep,
+        SingleStepFailed,
+        RunStepFailed,
+        RunPaused
+    };
+
+signals:
+    void paused(int reason);
+
+public:
+    SN8F2288* chip;
     ChipCpu(SN8F2288* chip, QObject* parent = nullptr);
 
-signals:
-    void haltCpu();
+    void run() override;
+    virtual ~ChipCpu() override;
+
+    enum
+    {
+        Step,
+        Run,
+        Kill
+    } action;
+
+    bool bWaiting = true;
+    bool bActionReceived = false;
+    bool bRunning = false;
+    bool bCpuActive = true;
+
     void stepCpu();
     void runCpu();
-
-signals:
-    void cpuPaused();
-    void cpuResumed();
-
-private slots:
-    void haltCpuSlot();
-    void stepCpuSlot();
-    void stepCpuClockSlot();
-    void runCpuSlot();
-
-protected:
-
-private:
-    SN8F2288* chip;
-    QTimer* clock;
+    void haltCpu();
+    void stopCpu();
 };
 
 #endif // CHIPCPU_H

@@ -48,7 +48,7 @@ public:
 
         std::vector<Token> toTokens(const Database & db) const
         {
-            vector<Token> line;
+            std::vector<Token> line;
             line.push_back(Token::addr(addr));
             line.push_back(Token::space());
             QString label = db.findRomLabelByAddr(addr);
@@ -143,9 +143,9 @@ public:
             return line;
         }
     };
-    vector<DisasmLine> lineInfo;
+    std::vector<DisasmLine> lineInfo;
 
-    bool disassemble(DisasmLine & line, vector<uint16_t> & branches) const;
+    bool disassemble(DisasmLine & line, std::vector<uint16_t> & branches) const;
     void loadRom(const QString & file);
 };
 

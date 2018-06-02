@@ -10,7 +10,7 @@ DisassemblerBackend::DisassemblerBackend()
     initializeInstructions();
 }
 
-bool DisassemblerBackend::disassemble(DisasmLine & line, vector<uint16_t> & branches) const
+bool DisassemblerBackend::disassemble(DisasmLine & line, std::vector<uint16_t> & branches) const
 {
     auto address = line.addr;
     auto instruction = line.data;
@@ -141,6 +141,7 @@ bool DisassemblerBackend::disassemble(DisasmLine & line, vector<uint16_t> & bran
 
 void DisassemblerBackend::loadRom(const QString & file)
 {
+    Core::cpu()->haltCpu();
     auto & chip = Core::chip();
     Core::db().clear();
     auto romData = readFile(file.toUtf8().constData());
@@ -164,10 +165,10 @@ void DisassemblerBackend::loadRom(const QString & file)
     Core::db().setRomLabel(8, "_interrupt");
     Core::db().setUnsavedChanges(false);
 
-    queue<uint16_t> q;
+    std::queue<uint16_t> q;
     q.push(0); //reset
     q.push(8); //interrupt
-    vector<uint16_t> callTargets;
+    std::vector<uint16_t> callTargets;
     while(!q.empty()) //bfs
     {
         auto curAddr = q.front();
@@ -178,7 +179,7 @@ void DisassemblerBackend::loadRom(const QString & file)
         if(curLine.valid)
             continue; //skip instructions we already disassembled (visited list)
 
-        vector<uint16_t> branches;
+        std::vector<uint16_t> branches;
         disassemble(curLine, branches);
 
         if(curLine.entry.branchType == CALLI)

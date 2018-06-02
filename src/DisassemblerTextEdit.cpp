@@ -18,6 +18,7 @@ DisassemblerTextEdit::DisassemblerTextEdit(QWidget *parent) : QPlainTextEdit(par
     mXrefsDialog = new XrefsDialog(this);
     connect(mXrefsDialog, SIGNAL(gotoAddress(uint16_t)), this, SLOT(gotoAddress(uint16_t)));
     connect(mXrefsDialog, SIGNAL(rejected()), this, SLOT(xrefsRejectedSlot()));
+    connect(Core::cpu(), SIGNAL(paused(int)), this, SLOT(cpuPausedSlot(int)));
 }
 
 std::vector<Token>* DisassemblerTextEdit::selectedLine() const
@@ -76,6 +77,22 @@ void DisassemblerTextEdit::xrefsRejectedSlot()
     gotoAddress(mOldXrefsAddr);
 }
 
+void DisassemblerTextEdit::cpuPausedSlot(int reason)
+{
+    switch(reason)
+    {
+    case ChipCpu::SingleStep:
+    case ChipCpu::SingleStepFailed:
+    case ChipCpu::RunPaused:
+    case ChipCpu::RunStepFailed:
+        break;
+    }
+    auto pc = Core::chip().PC.get();
+    mHighlighter->pc = pc;
+    mHighlighter->rehighlight();
+    gotoAddress(pc);
+}
+
 bool DisassemblerTextEdit::loadCfg(const QString & file)
 {
     auto res = QMessageBox::question(this, "Clear database?", "Should I clear the previous database?\n\nProgress may be lost...", QMessageBox::Yes, QMessageBox::No);
@@ -104,7 +121,6 @@ bool DisassemblerTextEdit::saveCfg(const QString &file)
 
 void DisassemblerTextEdit::keyPressEvent(QKeyEvent* event)
 {
-    qDebug() << "keyPressEvent, key: " << event->text();
     auto text = event->text();
     if(text.isEmpty()) //
         QPlainTextEdit::keyPressEvent(event);
@@ -252,6 +268,18 @@ void DisassemblerTextEdit::keyPressEvent(QKeyEvent* event)
             mXrefsDialog->showNormal();
         }
     }
+    else if(text == "s") // Step
+    {
+        Core::cpu()->stepCpu();
+    }
+    else if(text == "r") // Run
+    {
+        Core::cpu()->runCpu();
+    }
+    else if(text == "p") // Pause
+    {
+        Core::cpu()->haltCpu();
+    }
 }
 
 void DisassemblerTextEdit::mouseDoubleClickEvent(QMouseEvent*)
@@ -273,6 +301,7 @@ void DisassemblerTextEdit::mouseDoubleClickEvent(QMouseEvent*)
 void DisassemblerTextEdit::loadRom(const QString & file)
 {
     mBackend.loadRom(file);
+    cpuPausedSlot(ChipCpu::RunPaused);
     refreshRom();
 }
 
@@ -304,7 +333,4 @@ void DisassemblerTextEdit::refreshRom()
     moveCursor(QTextCursor::End);
     setTextCursor(QTextCursor(document()->findBlockByNumber(firstVisible)));
     setTextCursor(QTextCursor(document()->findBlockByNumber(oldBlock)));
-
-    mHighlighter->pc = 8; //TODO: signal
-    mHighlighter->rehighlight();
 }

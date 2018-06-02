@@ -1,5 +1,12 @@
 #include "Core.h"
 
+Core::Core()
+{
+    setvbuf(stdout, nullptr, _IONBF, 0);
+    _cpu = new ChipCpu(&_chip);
+    _cpu->start();
+}
+
 Core &Core::instance()
 {
     static Core i;
