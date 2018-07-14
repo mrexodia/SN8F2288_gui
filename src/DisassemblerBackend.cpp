@@ -3,7 +3,7 @@
 #include <QDebug>
 #include <queue>
 #include <QThread>
-#include <QTimer>"
+#include <QTimer>
 
 DisassemblerBackend::DisassemblerBackend()
 {

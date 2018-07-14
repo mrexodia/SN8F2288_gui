@@ -457,7 +457,7 @@ struct SN8F2288
 {
     static uint8_t ramReadStatic(void* thisptr, uint16_t index)
     {
-        ((SN8F2288*)thisptr)->ramRead(index);
+        return ((SN8F2288*)thisptr)->ramRead(index);
     }
 
     static void ramWriteStatic(void* thisptr, uint16_t index, uint8_t value)
@@ -1331,9 +1331,9 @@ struct SN8F2288
         }
         auto mask = entry.mask;
         auto opspace = entry.opSpace;
-        auto jump_action = entry.branchType;
-        auto mnemonic = entry.mnemonic;
-        auto caption = entry.operands;
+        //auto jump_action = entry.branchType;
+        //auto mnemonic = entry.mnemonic;
+        //auto caption = entry.operands;
 
         //strcat(opcode, mnemonic);
 

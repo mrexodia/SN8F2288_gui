@@ -121,3 +121,20 @@ void MainWindow::maybeSave()
             on_actionSave_Database_triggered();
     }
 }
+
+void MainWindow::on_actionRun_triggered()
+{
+    Core::cpu()->runCpu();
+}
+
+void MainWindow::on_actionPause_triggered()
+{
+    Core::cpu()->haltCpu();
+}
+
+void MainWindow::on_actionReset_triggered()
+{
+    Core::cpu()->haltCpu();
+    Core::chip().reset(ResetPowerOn);
+    Core::cpu()->paused(ChipCpu::RunPaused);
+}

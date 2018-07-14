@@ -26,6 +26,9 @@ private slots:
     void on_actionSave_Database_triggered();
     void on_actionSave_Database_as_triggered();
     void on_actionStep_triggered();
+    void on_actionRun_triggered();
+    void on_actionPause_triggered();
+    void on_actionReset_triggered();
 
 private:
     Ui::MainWindow *ui;
