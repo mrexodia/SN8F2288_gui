@@ -165,7 +165,7 @@ void initializeInstructions()
     entries[0xc0] = InstrEntry(0x3fff, ROM_SPACE, CALLI, "CALL", "%s", INSTR_ROM_CALL_OP);
 }
 
-string disassemble(uint16_t address, uint16_t instruction)
+string disassemble(uint16_t, uint16_t instruction)
 {
     auto bincode = uint8_t(instruction >> 8);
     uint8_t opcode_key = 0;
@@ -196,7 +196,7 @@ string disassemble(uint16_t address, uint16_t instruction)
     }
     auto mask = entry.mask;
     auto opspace = entry.opSpace;
-    auto jump_action = entry.branchType;
+    //auto jump_action = entry.branchType;
     auto mnemonic = entry.mnemonic;
     auto caption = entry.operands;
 
@@ -239,14 +239,15 @@ string disassemble(uint16_t address, uint16_t instruction)
     return string(opcode);
 }
 
+//USB implementation: https://youtube.com/watch?v=GFY_A3jcI28
+//QEMU USB emulation: https://www.linux-kvm.org/page/USB
+
+/*
 static bool invalidCommand(vector<string> &)
 {
     puts("invalid command!");
     return false;
 }
-
-//USB implementation: https://youtube.com/watch?v=GFY_A3jcI28
-//QEMU USB emulation: https://www.linux-kvm.org/page/USB
 
 static int chip_main(int argc, char* argv[])
 {
@@ -480,4 +481,4 @@ static int chip_main(int argc, char* argv[])
     }
 
     return 0;
-}
+}*/

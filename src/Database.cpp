@@ -176,6 +176,11 @@ void Database::clear()
     setUnsavedChanges(false);
 }
 
+bool Database::empty() const
+{
+    return romLabels.empty() && romComments.empty() && romRanges.empty() && globalRamLabels.empty() && globalRamBitLabels.empty();
+}
+
 QString Database::findRomLabelByAddr(uint16_t addr) const
 {
     auto found = romLabels.find(addr);

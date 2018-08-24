@@ -41,11 +41,11 @@ SOURCES += \
     ChipCpu.cpp \
     Config.cpp \
     RegisterTable.cpp \
-    sn8f2288_chip.cpp
+    SN8F2288/sn8f2288_chip.cpp
 
 HEADERS += \
     MainWindow.h \
-    sn8f2288_chip.h \
+    SN8F2288/sn8f2288_chip.h \
     Database.h \
     Token.h \
     DisassemblerTextEdit.h \
@@ -57,7 +57,12 @@ HEADERS += \
     Core.h \
     ChipCpu.h \
     Config.h \
-    RegisterTable.h
+    RegisterTable.h \
+    SN8F2288/InstrEntry.h \
+    SN8F2288/Memory.h \
+    SN8F2288/Interrupt.h \
+    SN8F2288/USB.h \
+    SN8F2288/TimerCounter.h
 
 FORMS += \
     MainWindow.ui \

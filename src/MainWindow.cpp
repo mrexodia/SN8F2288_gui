@@ -43,6 +43,8 @@ void MainWindow::on_action_Load_ROM_triggered()
     maybeSave();
     mRomPath = "/Users/duncan/Projects/SN8F2288_disassembler/cmake-build-debug/lenovo.rom";
     ui->disassembler->loadRom(mRomPath);
+    mDbPath = "/Users/duncan/Documents/test.cfg";
+    ui->disassembler->loadCfg(mDbPath);
     updateTitle();
     //ui->disassembler->loadRom("/Users/duncan/Library/Application Support/Binary Ninja/plugins/sn8f2288_binja/binja.rom");
 }

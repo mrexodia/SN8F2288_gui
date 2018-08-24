@@ -160,11 +160,6 @@ void DisassemblerBackend::loadRom(const QString & file)
         lineInfo[i].data = chip.rom.get(uint16_t(i));
     }
 
-    //TODO: load chip register definitions
-    Core::db().setRomLabel(0, "_reset");
-    Core::db().setRomLabel(8, "_interrupt");
-    Core::db().setUnsavedChanges(false);
-
     std::queue<uint16_t> q;
     q.push(0); //reset
     q.push(8); //interrupt
@@ -194,11 +189,11 @@ void DisassemblerBackend::loadRom(const QString & file)
         }
     }
 
-    qDebug() << "possible functions:";
+    /*qDebug() << "possible functions:";
 
     //https://stackoverflow.com/questions/1041620/whats-the-most-efficient-way-to-erase-duplicates-and-sort-a-vector
     sort(callTargets.begin(), callTargets.end());
     callTargets.erase(unique(callTargets.begin(), callTargets.end()), callTargets.end());
     for(uint16_t func : callTargets)
-        qDebug() << QString().sprintf("0x%04x", func);
+        qDebug() << QString().sprintf("0x%04x", func);*/
 }

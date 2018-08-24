@@ -19,6 +19,7 @@ public:
     bool save(const QString & file);
     bool load(const QString & file);
     void clear();
+    bool empty() const;
     bool unsavedChanges() const { return hasUnsavedChanges; }
     void setUnsavedChanges(bool value = true) { hasUnsavedChanges = value; }
 

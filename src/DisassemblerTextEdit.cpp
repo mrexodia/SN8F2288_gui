@@ -95,9 +95,12 @@ void DisassemblerTextEdit::cpuPausedSlot(int reason)
 
 bool DisassemblerTextEdit::loadCfg(const QString & file)
 {
-    auto res = QMessageBox::question(this, "Clear database?", "Should I clear the previous database?\n\nProgress may be lost...", QMessageBox::Yes, QMessageBox::No);
-    if(res == QMessageBox::Yes)
-        Core::db().clear();
+    if(!Core::db().empty())
+    {
+        auto res = QMessageBox::question(this, "Clear database?", "Should I clear the previous database?\n\nProgress may be lost...", QMessageBox::Yes, QMessageBox::No);
+        if(res == QMessageBox::Yes)
+            Core::db().clear();
+    }
     if(!Core::db().load(file))
     {
         QMessageBox::warning(this, "Error", "Failed to load database...");
