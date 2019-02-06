@@ -48,8 +48,8 @@ void ChipCpu::run()
                 }
                 count++;
 
-                if(chip->PC.get() == 8) //super dumb breakpoint
-                    bRunning = false;
+                /*if(chip->PC.get() == 8) //super dumb breakpoint
+                    bRunning = false;*/
             }
             paused(RunPaused);
 runFailed:

@@ -1,7 +1,7 @@
 #ifndef CHIPCPU_H
 #define CHIPCPU_H
 
-#include "sn8f2288_chip.h"
+#include "SN8F2288/sn8f2288_chip.h"
 #include <QThread>
 #include <QTimer>
 
