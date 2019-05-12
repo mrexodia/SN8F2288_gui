@@ -35,18 +35,14 @@ void MainWindow::closeEvent(QCloseEvent* e)
 
 void MainWindow::on_action_Load_ROM_triggered()
 {
-    /*auto file = QFileDialog::getOpenFileName(this, "Load ROM", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+    maybeSave();
+    auto file = QFileDialog::getOpenFileName(this, "Load ROM", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
     if(file.isEmpty())
         return;
     file = QDir::toNativeSeparators(file);
-    ui->disassembler->loadRom(file);*/
-    maybeSave();
-    mRomPath = "/Users/duncan/Projects/SN8F2288_disassembler/cmake-build-debug/lenovo.rom";
-    ui->disassembler->loadRom(mRomPath);
-    mDbPath = "/Users/duncan/Documents/test.cfg";
-    ui->disassembler->loadCfg(mDbPath);
+    mRomPath = file;
+    ui->disassembler->loadRom(file);
     updateTitle();
-    //ui->disassembler->loadRom("/Users/duncan/Library/Application Support/Binary Ninja/plugins/sn8f2288_binja/binja.rom");
 }
 
 void MainWindow::on_actionRefresh_triggered()
