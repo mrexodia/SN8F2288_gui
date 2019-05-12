@@ -55,9 +55,13 @@ private:
 
     QVector<RomRange> romRanges;
     QMap<uint16_t, QString> globalRamLabels;
+    QMap<uint16_t, QString> reservedGlobalRamLabels;
     QMap<QPair<uint16_t, uint8_t>, QString> globalRamBitLabels;
+    QMap<QPair<uint16_t, uint8_t>, QString> reservedGlobalRamBitLabels;
 
     RomRange* findRomRange(uint16_t romAddr);
+    void setReservedGlobalRamLabel(uint16_t addr, const QString & label);
+    void setReservedGlobalRamBitLabel(uint16_t addr, uint8_t bit, const QString & label);
 };
 
 #endif // DATABASE_H

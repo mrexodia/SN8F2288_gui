@@ -24,7 +24,9 @@ bool Database::save(const QString & file)
             ini.SetValue(section.toStdString(), QString().sprintf("0x%04x.%d", key.first, key.second).toStdString(), ram[key].toStdString());
     };
     saveRamLabels("ram", globalRamLabels);
+    saveRamLabels("ram-reserved", reservedGlobalRamLabels);
     saveRamBitLabels("ram", globalRamBitLabels);
+    saveRamBitLabels("ram-reserved", reservedGlobalRamBitLabels);
     for(auto & romRange : romRanges)
     {
         auto section = QString().sprintf("ram@0x%04x-0x%04x", romRange.romStart, romRange.romEnd);
@@ -33,7 +35,9 @@ bool Database::save(const QString & file)
     }
     saveRamLabels("rom", romLabels);
     saveRamLabels("comment", romComments);
-    f.write(ini.Serialize().c_str());
+    auto serialized = QString::fromStdString(ini.Serialize());
+    serialized.replace("\r", "");
+    f.write(serialized.toUtf8().constData());
     f.close();
     setUnsavedChanges(false);
     return true;
@@ -60,11 +64,12 @@ bool Database::load(const QString & file)
     for(auto & section : ini.Sections())
     {
         auto qsection = QString::fromStdString(section);
+        auto isRamReserved = section == "ram-reserved";
         if(section == "chip")
         {
             //ignore
         }
-        else if(section == "ram")
+        else if(section == "ram" || isRamReserved)
         {
             for(auto & key : ini.Keys(section))
             {
@@ -77,7 +82,12 @@ bool Database::load(const QString & file)
                     auto ramAddr = ramAddrText.left(bitIdx).toUShort(&ok1, 16);
                     auto bitAddr = ramAddrText.right(1).toUShort(&ok2);
                     if(ok1 && ok2)
-                        setGlobalRamBitLabel(ramAddr, bitAddr, QString::fromStdString(ini.GetValue(section, key)));
+                    {
+                        if(isRamReserved)
+                            setReservedGlobalRamBitLabel(ramAddr, bitAddr, QString::fromStdString(ini.GetValue(section, key)));
+                        else
+                            setGlobalRamBitLabel(ramAddr, bitAddr, QString::fromStdString(ini.GetValue(section, key)));
+                    }
                     else
                         qDebug() << "global bit nein";
                 }
@@ -85,7 +95,12 @@ bool Database::load(const QString & file)
                 {
                     auto ramAddr = ramAddrText.toUShort(&ok, 16);
                     if(ok)
-                        setGlobalRamLabel(ramAddr, QString::fromStdString(ini.GetValue(section, key)));
+                    {
+                        if(isRamReserved)
+                            setReservedGlobalRamLabel(ramAddr, QString::fromStdString(ini.GetValue(section, key)));
+                        else
+                            setGlobalRamLabel(ramAddr, QString::fromStdString(ini.GetValue(section, key)));
+                    }
                 }
             }
         }
@@ -172,13 +187,21 @@ void Database::clear()
     romComments.clear();
     romRanges.clear();
     globalRamLabels.clear();
+    reservedGlobalRamLabels.clear();
     globalRamBitLabels.clear();
+    reservedGlobalRamBitLabels.clear();
     setUnsavedChanges(false);
 }
 
 bool Database::empty() const
 {
-    return romLabels.empty() && romComments.empty() && romRanges.empty() && globalRamLabels.empty() && globalRamBitLabels.empty();
+    return romLabels.empty()
+            && romComments.empty()
+            && romRanges.empty()
+            && globalRamLabels.empty()
+            && reservedGlobalRamLabels.empty()
+            && globalRamBitLabels.empty()
+            && reservedGlobalRamBitLabels.empty();
 }
 
 QString Database::findRomLabelByAddr(uint16_t addr) const
@@ -230,6 +253,12 @@ QString Database::findGlobalRamLabelByAddr(uint16_t addr) const
     QString label;
     if(found != globalRamLabels.end())
         label = found.value();
+    else
+    {
+        found = reservedGlobalRamLabels.find(addr);
+        if(found != reservedGlobalRamLabels.end())
+            label = found.value();
+    }
     return label;
 }
 
@@ -245,6 +274,12 @@ QString Database::findGlobalRamBitLabelByAddr(uint16_t addr, uint8_t bit) const
     QString label;
     if(found != globalRamBitLabels.end())
         label = found.value();
+    else
+    {
+        found = reservedGlobalRamBitLabels.find({addr, bit});
+        if(found != reservedGlobalRamBitLabels.end())
+            label = found.value();
+    }
     return label;
 }
 
@@ -268,6 +303,17 @@ Database::RomRange* Database::findRomRange(uint16_t romAddr)
         if(romAddr >= range.romStart && romAddr <= range.romEnd)
             return &range;
     return nullptr;
+}
+
+void Database::setReservedGlobalRamLabel(uint16_t addr, const QString & label)
+{
+    reservedGlobalRamLabels[addr] = label;
+    setUnsavedChanges();
+}
+
+void Database::setReservedGlobalRamBitLabel(uint16_t addr, uint8_t bit, const QString & label)
+{
+    reservedGlobalRamBitLabels[{addr, bit}] = label;
 }
 
 Database::RomRange* Database::addRomRange(uint16_t romStart, uint16_t romEnd)
