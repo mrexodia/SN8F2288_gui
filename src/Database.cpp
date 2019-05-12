@@ -111,7 +111,7 @@ bool Database::load(const QString & file)
                         {
                             bool ok1 = false, ok2 = false;
                             auto ramAddr = ramAddrText.left(bitIdx).toUShort(&ok1, 16);
-                            auto bitAddr = ramAddrText.right(1).toUShort(&ok2);
+                            auto bitAddr = (uint8_t)ramAddrText.right(1).toUShort(&ok2);
                             if(ok1 && ok2)
                                 romRange->ramBitLabels.insert({ramAddr, bitAddr}, QString::fromStdString(ini.GetValue(section, key)));
                             else
