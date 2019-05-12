@@ -11,6 +11,11 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = SN8F2288
 TEMPLATE = app
 
+win32 {
+    RC_FILE = SN8F2288.rc
+    LIBS += -luser32
+}
+
 macx {
     ICON = images/cpu.icns
     QMAKE_INFO_PLIST = Info.plist

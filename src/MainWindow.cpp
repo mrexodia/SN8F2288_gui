@@ -10,6 +10,11 @@
 #include "Config.h"
 #include "RangesDialog.h"
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#include "resource.h"
+#endif //Q_OS_WIN
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -18,6 +23,13 @@ MainWindow::MainWindow(QWidget *parent) :
     mBaseTitle = windowTitle();
     ui->splitter->setStretchFactor(0, 70);
     ui->splitter->setStretchFactor(1, 30);
+
+    // Windows hack for setting the icon in the taskbar.
+#ifdef Q_OS_WIN
+    HICON hIcon = LoadIconW(GetModuleHandleW(0), MAKEINTRESOURCE(IDI_ICON1));
+    SendMessageW((HWND)winId(), WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+    DestroyIcon(hIcon);
+#endif //Q_OS_WIN
 }
 
 MainWindow::~MainWindow()
